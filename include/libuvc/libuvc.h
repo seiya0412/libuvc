@@ -577,6 +577,15 @@ int uvc_set_ctrl(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl, void *da
 uvc_error_t uvc_get_power_mode(uvc_device_handle_t *devh, enum uvc_device_power_mode *mode, enum uvc_req_code req_code);
 uvc_error_t uvc_set_power_mode(uvc_device_handle_t *devh, enum uvc_device_power_mode mode);
 
+uvc_error_t uvc_still_control_probe(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, enum uvc_req_code req);
+uvc_error_t uvc_still_control_commit(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, enum uvc_req_code req);
+
+uvc_error_t uvc_get_still_image_trigger(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, uint8_t* trigger, enum uvc_req_code req_code);
+uvc_error_t uvc_set_still_image_trigger(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, uint8_t trigger);
+
+uvc_error_t uvc_get_camera_control(uvc_device_handle_t *devh, uint8_t* choice, enum uvc_req_code req_code, int item);
+uvc_error_t uvc_set_camera_control(uvc_device_handle_t *devh, uint8_t choice, int item);
+
 /* AUTO-GENERATED control accessors! Update them with the output of `ctrl-gen.py decl`. */
 uvc_error_t uvc_get_scanning_mode(uvc_device_handle_t *devh, uint8_t* mode, enum uvc_req_code req_code);
 uvc_error_t uvc_set_scanning_mode(uvc_device_handle_t *devh, uint8_t mode);

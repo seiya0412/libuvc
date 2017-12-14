@@ -5,6 +5,213 @@
 static const int REQ_TYPE_SET = 0x21;
 static const int REQ_TYPE_GET = 0xa1;
 
+int cmd[11]={
+	UVC_XU_CONTROL_CAMERA_FWUPGRADE,
+	UVC_XU_CONTROL_CAMERA_SHUTTER_SPEED,
+	UVC_XU_CONTROL_CAMERA_ISO,
+	UVC_XU_CONTROL_CAMERA_IRIS,
+	UVC_XU_CONTROL_CAMERA_WHITE_BALANCE,
+	UVC_XU_CONTROL_CAMERA_SHARPNESS,
+	UVC_XU_CONTROL_CAMERA_IMAGE_QUALITY,
+	UVC_XU_CONTROL_CAMERA_FOCUS,
+	UVC_XU_CONTROL_CAMERA_SPriority_ISO,
+	UVC_XU_CONTROL_CAMERA_APriority_ISO,
+	UVC_XU_CONTROL_CAMERA_FRAME_RATE,
+};
+
+
+uvc_error_t uvc_still_control_probe(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, enum uvc_req_code req) {
+  uint8_t data[11];
+  uvc_error_t ret;
+
+  memset(data, 0, sizeof(data));
+ 
+  /* prepare for a SET transfer */
+  if (req == UVC_SET_CUR) {
+	  data[0] = ctrl->bFormatIndex;
+	  data[1] = ctrl->bFrameIndex;
+	  data[2] = 0;
+	  INT_TO_DW(ctrl->dwMaxVideoFrameSize, data + 3);
+	  INT_TO_DW(0, data + 7);
+
+	  //printf("[SET]uvc_still_control_probe ctrl->bFrameIndex: %d\n", ctrl->bFrameIndex);
+	  //printf("[SET]uvc_still_control_probe ctrl->dwMaxVideoFrameSize: 0x%x\n", ctrl->dwMaxVideoFrameSize);
+  }
+  
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    req == UVC_SET_CUR ? REQ_TYPE_SET : REQ_TYPE_GET,
+    req,   
+    UVC_VS_STILL_PROBE_CONTROL << 8,
+    ctrl->bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+  
+  if (ret <= 0) {
+    return ret;
+  }
+
+  /* now decode following a GET transfer */
+  if (req != UVC_SET_CUR) {
+    ctrl->bFormatIndex = data[0];
+    ctrl->bFrameIndex = data[1];
+    ctrl->dwMaxVideoFrameSize = DW_TO_INT(data + 3);
+    ctrl->dwMaxPayloadTransferSize = DW_TO_INT(data + 7);
+	//printf("[GET]uvc_still_control_probe ctrl->bFrameIndex: %d\n", ctrl->bFrameIndex);
+	//printf("[GET]uvc_still_control_probe ctrl->dwMaxVideoFrameSize: 0x%x\n", ctrl->dwMaxVideoFrameSize);
+	//printf("[GET]uvc_still_control_probe ctrl->dwMaxPayloadTransferSize: 0x%x\n", ctrl->dwMaxPayloadTransferSize);  
+  }
+
+   return UVC_SUCCESS;
+
+}
+
+uvc_error_t uvc_still_control_commit(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, enum uvc_req_code req) {
+  uint8_t data[11];
+  uvc_error_t ret;
+
+  memset(data, 0, sizeof(data));
+ 
+  /* prepare for a SET transfer */
+  if (req == UVC_SET_CUR) {
+
+	  data[0] = ctrl->bFormatIndex;
+	  data[1] = ctrl->bFrameIndex;
+	  data[2] = 0;
+	  INT_TO_DW(ctrl->dwMaxVideoFrameSize, data + 3);
+	  INT_TO_DW(ctrl->dwMaxPayloadTransferSize, data + 7);
+
+	  //printf("[SET]uvc_still_control_commit ctrl->bFrameIndex: %d\n", ctrl->bFrameIndex);
+	  //printf("[SET]uvc_still_control_commit ctrl->dwMaxVideoFrameSize:0x%x\n", ctrl->dwMaxVideoFrameSize);
+	  //printf("[SET]uvc_still_control_commit ctrl->dwMaxPayloadTransferSize: 0x%x\n", ctrl->dwMaxPayloadTransferSize);   
+  }
+  
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    req == UVC_SET_CUR ? REQ_TYPE_SET : REQ_TYPE_GET,
+    req,   
+    UVC_VS_STILL_COMMIT_CONTROL << 8,
+    ctrl->bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+  
+  if (ret <= 0) {
+    return ret;
+  }
+
+  /* now decode following a GET transfer */
+  if (req != UVC_SET_CUR) {
+    ctrl->bFormatIndex = data[0];
+    ctrl->bFrameIndex = data[1];
+    ctrl->dwMaxVideoFrameSize = DW_TO_INT(data + 3);
+    ctrl->dwMaxPayloadTransferSize = DW_TO_INT(data + 7);
+	//printf("[GET]uvc_still_control_commit ctrl->bFrameIndex: %d\n", ctrl->bFrameIndex);
+	//printf("[GET]uvc_still_control_commit ctrl->dwMaxVideoFrameSize:0x%x\n", ctrl->dwMaxVideoFrameSize);
+	//printf("[GET]uvc_still_control_commit ctrl->dwMaxPayloadTransferSize: 0x%x\n", ctrl->dwMaxPayloadTransferSize);  
+  }
+
+   return UVC_SUCCESS;
+
+}
+
+uvc_error_t uvc_get_still_image_trigger(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, uint8_t* trigger, enum uvc_req_code req_code) {
+  uint8_t data[1];
+  uvc_error_t ret;
+
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    REQ_TYPE_GET, req_code,
+    UVC_VS_STILL_IMAGE_TRIGGER_CONTROL << 8,
+    ctrl->bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+
+  if (ret == sizeof(data)) {
+    *trigger = data[0];
+    return UVC_SUCCESS;
+  } else {
+    return ret;
+  }
+}
+
+
+uvc_error_t uvc_set_still_image_trigger(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl, uint8_t trigger) {
+  uint8_t data[1];
+  uvc_error_t ret;
+
+  data[0] = trigger;
+
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    REQ_TYPE_SET, UVC_SET_CUR,
+    UVC_VS_STILL_IMAGE_TRIGGER_CONTROL << 8,
+    ctrl->bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+  
+  if (ret <= 0) {
+    return ret;
+  }
+
+ #if 0// 
+  ret = libusb_set_interface_alt_setting(devh->usb_devh, ctrl->bInterfaceNumber, 4);
+  printf("devh->info->ctrl_if.bInterfaceNumber=%d	ctrl->bInterfaceNumber=%d\n", devh->info->ctrl_if.bInterfaceNumber,ctrl->bInterfaceNumber);
+
+  if (ret <= 0) {
+    return ret;
+  }
+#endif
+
+  return UVC_SUCCESS;
+
+}
+
+uvc_error_t uvc_get_camera_control(uvc_device_handle_t *devh, uint8_t* choice, enum uvc_req_code req_code, int item) {
+  uint8_t data[1];
+  uvc_error_t ret;
+  
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    REQ_TYPE_GET, req_code,
+    cmd[item] << 8,
+    uvc_get_extension_units(devh)->bUnitID << 8 | devh->info->ctrl_if.bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+
+  if (ret == sizeof(data)) {
+    *choice = data[0];
+    return UVC_SUCCESS;
+  } else {
+    return ret;
+  }
+}
+
+uvc_error_t uvc_set_camera_control(uvc_device_handle_t *devh, uint8_t choice, int item) {
+  uint8_t data[1];
+  uvc_error_t ret;
+
+  data[0] = choice;
+
+  ret = libusb_control_transfer(
+    devh->usb_devh,
+    REQ_TYPE_SET, UVC_SET_CUR,
+    cmd[item] << 8,
+    uvc_get_extension_units(devh)->bUnitID << 8 | devh->info->ctrl_if.bInterfaceNumber,
+    data,
+    sizeof(data),
+    0);
+
+  if (ret == sizeof(data))
+    return UVC_SUCCESS;
+  else
+    return ret;
+}
+
 /** @ingroup ctrl
  * @brief Reads the SCANNING_MODE control.
  * @param devh UVC device handle
