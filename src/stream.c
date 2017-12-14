@@ -575,6 +575,8 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
  *
  * @param transfer Active transfer
  */
+
+int bStillImageFrame=0;
 void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
   uvc_stream_handle_t *strmh = transfer->user_data;
 
@@ -588,6 +590,7 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
     } else {
       /* This is an isochronous mode transfer, so each packet has a payload transfer */
       int packet_id;
+	 
 
       for (packet_id = 0; packet_id < transfer->num_iso_packets; ++packet_id) {
         uint8_t *pktbuf;
@@ -604,6 +607,11 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
 
         _uvc_process_payload(strmh, pktbuf, pkt->actual_length);
 
+		if(pktbuf[1]&0x20)
+		{
+			bStillImageFrame=1;
+			//printf("_uvc_stream_callback pktbuf =0x%x\n",pktbuf[1]);
+		}	
       }
     }
     break;
