@@ -108,7 +108,7 @@ struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
     FMT(UVC_FRAME_FORMAT_UYVY,
       {'U',  'Y',  'V',  'Y', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
     FMT(UVC_FRAME_FORMAT_GRAY8,
-      {'Y',  '8',  '0',  '0', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
+      {'Y',  '8',  ' ',  ' ', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
     FMT(UVC_FRAME_FORMAT_GRAY16,
       {'Y',  '1',  '6',  ' ', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
     FMT(UVC_FRAME_FORMAT_BY8,
@@ -139,6 +139,9 @@ struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
 static uint8_t _uvc_frame_format_matches_guid(enum uvc_frame_format fmt, uint8_t guid[16]) {
   struct format_table_entry *format;
   int child_idx;
+
+  UVC_DEBUG("uvc_frame_format: %d, guid: %c%c%c%c 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", fmt, 
+  guid[0],guid[1],guid[2],guid[3],guid[4],guid[5],guid[6],guid[7],guid[8],guid[9],guid[10],guid[11],guid[12],guid[13],guid[14],guid[15]);
 
   format = _get_format_entry(fmt);
   if (!format)
@@ -375,6 +378,7 @@ uvc_error_t uvc_get_stream_ctrl_format_size(
         continue;
 
       DL_FOREACH(format->frame_descs, frame) {
+        UVC_DEBUG("frame->wWidth=%d, width=%d, frame->wHeight=%d, height=%d", frame->wWidth, width, frame->wHeight, height);
         if (frame->wWidth != width || frame->wHeight != height)
           continue;
 
