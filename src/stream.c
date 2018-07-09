@@ -139,11 +139,17 @@ struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
 static uint8_t _uvc_frame_format_matches_guid(enum uvc_frame_format fmt, uint8_t guid[16]) {
   struct format_table_entry *format;
   int child_idx;
+  uint8_t fmt_guid[16];
 
   UVC_DEBUG("uvc_frame_format: %d, guid: %c%c%c%c 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", fmt, 
   guid[0],guid[1],guid[2],guid[3],guid[4],guid[5],guid[6],guid[7],guid[8],guid[9],guid[10],guid[11],guid[12],guid[13],guid[14],guid[15]);
 
   format = _get_format_entry(fmt);
+
+  memcpy(fmt_guid, format->guid, 16);
+  UVC_DEBUG("                  %d, guid: %c%c%c%c 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", fmt,
+  fmt_guid[0],fmt_guid[1],fmt_guid[2],fmt_guid[3],fmt_guid[4],fmt_guid[5],fmt_guid[6],fmt_guid[7],fmt_guid[8],fmt_guid[9],fmt_guid[10],fmt_guid[11],fmt_guid[12],fmt_guid[13],fmt_guid[14],fmt_guid[15]);
+
   if (!format)
     return 0;
 
