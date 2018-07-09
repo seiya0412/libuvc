@@ -397,9 +397,9 @@ uvc_error_t uvc_get_stream_ctrl_format_size(
         uvc_query_stream_ctrl( devh, ctrl, 1, UVC_GET_MAX);
 
         if (frame->intervals) {
-          UVC_DEBUG("seeking available interval: %u ?= %u", 10000000 / *interval, (unsigned int)fps);
           for (interval = frame->intervals; *interval; ++interval) {
             // allow a fps rate of zero to mean "accept first rate available"
+            UVC_DEBUG("seeking available interval: %u ?= %u", 10000000 / *interval, (unsigned int)fps);
             if (10000000 / *interval == (unsigned int) fps || fps == 0) {
 
               ctrl->bmHint = (1 << 0); /* don't negotiate interval */
@@ -411,12 +411,13 @@ uvc_error_t uvc_get_stream_ctrl_format_size(
             }
           }
         } else {
+          uint32_t interval_100ns = 10000000 / fps;
+          uint32_t interval_offset = interval_100ns - frame->dwMinFrameInterval;
+
           UVC_DEBUG("seeking available fps: %u ?>= %u", interval_100ns, frame->dwMinFrameInterval);
           UVC_DEBUG("                     : %u ?<= %u", interval_100ns, frame->dwMaxFrameInterval);
           UVC_DEBUG("                     : %u"       , interval_offset);
           UVC_DEBUG("                     : %u"       , interval_offset % frame->dwFrameIntervalStep);
-          uint32_t interval_100ns = 10000000 / fps;
-          uint32_t interval_offset = interval_100ns - frame->dwMinFrameInterval;
 
           if (interval_100ns >= frame->dwMinFrameInterval
               && interval_100ns <= frame->dwMaxFrameInterval
